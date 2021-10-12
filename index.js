@@ -15,14 +15,44 @@ client.on("ready", () => {
   client.user.setActivity("Your Songs", { type: "PLAYING" });
 });
 
+const status = (queue) =>
+  `Volume: \`${queue.volume}%\` | Filter: \`${
+    queue.filter || "Off"
+  }\` | Loop: \`${
+    queue.repeatMode
+      ? queue.repeatMode == 2
+        ? "All Queue"
+        : "This Song"
+      : "Off"
+  }\` | Autoplay: \`${queue.autoplay ? "On" : "Off"}\``;
+
 // distube events
 distube.on("playSong", (queue, song) => {
-  queue.textChannel.send(`🎵 Playing \`${song.name}\``);
+  let playembed = new Discord.MessageEmbed()
+    .setColor("BLURPLE")
+    .setTitle(`🎵 Playing `)
+    .setThumbnail(song.thumbnail)
+    .setDescription(`[${song.name}](${song.url})`)
+    .addField("Requested By", `${song.user}`, true)
+    .addField("Duration", `${song.formattedDuration.toString()}`, true)
+    .setFooter(status(queue), song.user.displayAvatarURL({ dynamic: true }));
+
+  queue.textChannel.send({ embeds: [playembed] });
 });
 distube.on("addSong", (queue, song) => {
-  queue.textChannel.send(
-    `Added to Queue \`${song.name}\` \`${song.formattedDuration}\``
-  );
+  let playembed = new Discord.MessageEmbed()
+    .setColor("BLURPLE")
+    .setTitle(`🎵 Added to Queue `)
+    .setThumbnail(song.thumbnail)
+    .setDescription(`[${song.name}](${song.url})`)
+    .addField("Requested By", `${song.user}`, true)
+    .addField("Duration", `${song.formattedDuration.toString()}`, true)
+    .setFooter(
+      `Coded By Kabir Singh`,
+      song.user.displayAvatarURL({ dynamic: true })
+    );
+
+  queue.textChannel.send({ embeds: [playembed] });
 });
 client.on("messageCreate", async (message) => {
   if (
@@ -41,10 +71,43 @@ client.on("messageCreate", async (message) => {
     let channel = message.member.voice.channel;
     let queue = distube.getQueue(message.guildId);
     if (!channel) {
-      return message.reply(`>>> Please Join a Voice Channel`);
+      return message.reply({
+        embeds: [
+          new Discord.MessageEmbed()
+            .setColor("BLURPLE")
+            .setDescription(`>>> Please Join a Voice Channel`)
+            .setFooter(
+              `Coded By Kabir Singh`,
+              message.author.displayAvatarURL({ dynamic: true })
+            ),
+        ],
+      });
     }
+    // if (message.guild.me.voice.channel !== channel) {
+    //   return message.reply({
+    //     embeds: [
+    //       new Discord.MessageEmbed()
+    //         .setColor("BLURPLE")
+    //         .setDescription(`>>> Please Join My Voice Channel to Play Song`)
+    //         .setFooter(
+    //           `Coded By Kabir Singh`,
+    //           message.author.displayAvatarURL({ dynamic: true })
+    //         ),
+    //     ],
+    //   });
+    // }
     if (!search) {
-      return message.reply(`>>> Please Provide me Song name or Link`);
+      return message.reply({
+        embeds: [
+          new Discord.MessageEmbed()
+            .setColor("BLURPLE")
+            .setDescription(`>>> Please Provide me Song name or Link`)
+            .setFooter(
+              `Coded By Kabir Singh`,
+              message.author.displayAvatarURL({ dynamic: true })
+            ),
+        ],
+      });
     }
     distube.play(message, search);
   } else if (cmd === "skip") {
@@ -56,7 +119,7 @@ client.on("messageCreate", async (message) => {
   } else if (cmd === "volume") {
     let amount = parseInt(args[0]);
     let queue = distube.getQueue(message.guild.id);
-    queue.setVolume(amount)
+    queue.setVolume(amount);
     message.channel.send(`>>> Volume set to ${amount}`);
   }
 });
